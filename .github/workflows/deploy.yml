@@ -1,0 +1,84 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  purge:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Set Git identity
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global init.defaultBranch main
+
+    - name: Remove Git history
+      run: |
+        rm -rf .git
+        git init
+        git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        git add .
+        git commit -m "Update files"
+        git push --force origin main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  clean:
+    needs: [purge]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Clean up workflow runs
+      uses: benjithatfoxguy/github-workflow-clean@v0.0.1
+      with:
+        delete-level: 'repo'
+        token: ${{ secrets.GH_TOKEN }}
+        owner: ${{ github.repository_owner }}
+        repo: ${{ github.event.repository.name }}
+        workflow: 'Purge History'
+    - name: Clean up deployments
+      uses: strumwolf/delete-deployment-environment@v2
+      with:
+        token: ${{ secrets.GH_TOKEN }}
+        environment: github-pages
+        onlyRemoveDeployments: true
+
+  deploy:
+    needs: [purge, clean]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

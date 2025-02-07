@@ -1,0 +1,43 @@
+name: Deny Contributions
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+  discussion:
+    types: [created]
+
+permissions:
+  issues: write
+  pull-requests: write
+  discussions: write
+
+concurrency:
+  group: deny-contributions-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Close Issue
+      if: github.event_name == 'issues'
+      run: |
+        gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} --comment "This repository does not accept issues."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Close Pull Request
+      if: github.event_name == 'pull_request'
+      run: |
+        gh pr close ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --comment "This repository does not accept pull requests."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Close Discussion
+      if: github.event_name == 'discussions'
+      run: |
+        gh discussion close ${{ github.event.discussion.number }} --repo ${{ github.repository }} --comment "This repository does not accept discussions."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
