@@ -1,10 +1,116 @@
 <!DOCTYPE html>
-<html>
-<body>
-<h1>This is a GH Pages Repository for VRChat Assets</h1>
-<h2>No website lies here!</h2>
-<h3><a href="javascript:history.back()">Go back to where you came from</a></h3>
-<h3><a href="https://status.mechapower.eu">Visit the MP status page</a></h3>
-<h3><a href="https://the.benjifox.gay">Visit the main page</a></h3>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VRCHost - VRChat CDN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    .floating {
+      animation: float 3s ease-in-out infinite;
+    }
+    .hidden-easter-egg {
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+    }
+    .show-easter-egg {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+  <div class="container mx-auto px-4 py-12 flex-grow">
+    <header class="text-center mb-12">
+      <h1 class="text-5xl font-bold text-purple-400 mb-4">VRCHost</h1>
+      <p class="text-xl text-gray-300">Content Delivery Network for VRChat Worlds</p>
+    </header>
+
+    <main class="max-w-3xl mx-auto">
+      <section class="bg-gray-800 rounded-lg p-6 mb-8 shadow-lg">
+        <h2 class="text-2xl font-semibold text-purple-300 mb-4">About VRChat</h2>
+        <p class="mb-4">
+          VRChat is a dynamic social VR experience where creativity meets community. Dive into immersive worlds, customize your avatar, 
+          and interact with friends from around the globe – all within a creative, ever-evolving virtual space.
+        </p>
+        <p>
+          One of VRChat’s standout features is its versatility in loading content. Media such as images, videos, and interactive web pages are loaded directly into the world via stringloading, and advanced scripting allows for data to be parsed from CSV, JSON, and more.
+        </p>
+      </section>
+
+      <section class="bg-gray-800 rounded-lg p-6 mb-8 shadow-lg">
+        <h2 class="text-2xl font-semibold text-purple-300 mb-4">About VRCHost</h2>
+        <p class="mb-4">
+          VRCHost is a private CDN (Content Delivery Network) designed to host files for custom VRChat worlds and experiences. 
+          VRChat can load images, videos, audio, and even complex data files from external sources like this one to bring your virtual environments to life.
+        </p>
+        <p class="mb-4 text-yellow-200 font-medium">
+          If you're seeing this page outside of VRChat, something isn’t quite right – either the content didn’t load as expected 
+          or the URL was mistyped. This page is intended solely for VRChat use.
+        </p>
+        <p class="text-gray-400 italic">
+          This CDN is hosted on GitHub Pages, leveraging a trusted platform to serve static content reliably. 
+          The URLs remain permanent and stable.
+        </p>
+      </section>
+
+      <section class="bg-gray-800 rounded-lg p-6 shadow-lg text-center">
+        <h2 class="text-2xl font-semibold text-purple-300 mb-4">How Content Works in VRChat</h2>
+        <p class="mb-4">
+          In VRChat, media is loaded directly into the world without the need for an embedded browser framework. 
+          This means that all supported media – including images, videos, and data files – can be seamlessly integrated via URLs.
+        </p>
+        <p class="mb-4">
+          Additionally, VRChat supports stringloading and has powerful scripting capabilities that allow you to load and parse CSV, JSON, and other data formats to enhance your world.
+        </p>
+        <div class="bg-gray-700 p-4 rounded inline-block">
+          <p class="text-sm font-mono">Example media URL format:</p>
+          <p class="text-sm font-mono text-purple-300">https://benjithatfoxguy.github.io/vrhost/path/to/file.png</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="bg-gray-800 py-6 text-center text-gray-400 text-sm">
+    <p>VRCHost CDN - Private content delivery for VRChat worlds</p>
+    <p>Not affiliated with VRChat Inc.</p>
+  </footer>
+
+  <!-- Easter Egg - VRCat is watching you -->
+  <div id="easterEgg" class="hidden-easter-egg">
+    <div class="bg-gray-800 p-4 rounded-lg shadow-xl border border-purple-500 max-w-xs">
+      <p class="text-sm mb-2">The VRCat is peeking at you...</p>
+      <!-- Replace this with your actual VRCat PNG -->
+      <img src="https://benjithatfoxguy.github.io/vrhost/images/vrcat.webp" alt="VRCat" class="w-24 h-24 mx-auto floating" id="vrcatImage">
+      <p class="text-xs mt-2 text-gray-400">You weren't supposed to see this...</p>
+    </div>
+  </div>
+
+  <script>
+    // Check if running within VRChat
+    if (!navigator.userAgent.includes('VRChat')) {
+      // Show easter egg after a delay
+      setTimeout(() => {
+        const easterEgg = document.getElementById('easterEgg');
+        easterEgg.classList.add('show-easter-egg');
+        
+        // Animate the VRCat to look around occasionally
+        const vrcat = document.getElementById('vrcatImage');
+        setInterval(() => {
+          vrcat.style.transform = `translateY(-5px) rotate(${Math.random() * 10 - 5}deg)`;
+          setTimeout(() => {
+            vrcat.style.transform = 'translateY(0) rotate(0)';
+          }, 1000);
+        }, 5000);
+      }, 3000);
+    }
+  </script>
 </body>
 </html>
