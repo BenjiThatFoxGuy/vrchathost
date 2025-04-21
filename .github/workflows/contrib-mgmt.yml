@@ -1,0 +1,92 @@
+name: Contribution management
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+  discussion:
+    types: [created]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  discussions: write
+
+concurrency:
+  group: contribution-management-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  handle-contributions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close Issue
+        if: github.event_name == 'issues'
+        run: |
+          gh issue close ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --comment "This repository does not accept issues."
+          gh issue lock ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --reason "None"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Handle Pull Request
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          REPO_OWNER="$(cut -d'/' -f1 <<< "${{ github.repository }}")"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          lowercase_body="$(echo "$PR_BODY" | tr '[:upper:]' '[:lower:]')"
+
+          if [[ "$PR_AUTHOR" == "$REPO_OWNER" ]]; then
+            if [[ "$lowercase_body" == *"done"* || "$lowercase_body" == *"merge"* || "$lowercase_body" == *"good"* ]]; then
+              echo "Author is repo owner and PR description indicates approval. Merging PR..."
+              gh pr merge "$PR_NUMBER" --repo "${{ github.repository }}" --merge --body "Auto-merged by workflow."
+            else
+              echo "Author is repo owner but no approval keyword found in description. Leaving PR open."
+            fi
+          else
+            echo "PR from external contributor. Closing..."
+            gh pr close "$PR_NUMBER" --repo "${{ github.repository }}" --comment "This repository does not accept pull requests from external contributors."
+            gh pr lock "$PR_NUMBER" --repo "${{ github.repository }}" --reason "None"
+          fi
+
+      - name: Handle Approval Comment on PR
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          COMMENT_AUTHOR="${{ github.event.comment.user.login }}"
+          REPO_OWNER="$(cut -d'/' -f1 <<< "${{ github.repository }}")"
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          lowercase_comment="$(echo "$COMMENT_BODY" | tr '[:upper:]' '[:lower:]')"
+
+          if [[ "$COMMENT_AUTHOR" == "$REPO_OWNER" ]]; then
+            if [[ "$lowercase_comment" == *"done"* || "$lowercase_comment" == *"merge"* || "$lowercase_comment" == *"good"* ]]; then
+              echo "Repo owner left an approval comment. Attempting to merge PR #$ISSUE_NUMBER..."
+              gh pr merge "$ISSUE_NUMBER" --repo "${{ github.repository }}" --merge --body "Auto-merged by workflow (via comment)."
+            else
+              echo "Comment from repo owner did not contain approval keywords."
+            fi
+          else
+            echo "Comment author is not the repo owner. Ignoring comment."
+          fi
+
+      - name: Close Discussion
+        if: github.event_name == 'discussion'
+        run: |
+          gh discussion close ${{ github.event.discussion.number }} \
+            --repo ${{ github.repository }} \
+            --comment "This repository does not accept discussions."
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
